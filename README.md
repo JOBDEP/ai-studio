@@ -59,6 +59,27 @@ pricing without much notice.
 3. Pick a model, and for images, an aspect ratio.
 4. Generate — the result lands in the gallery, and the budget meter updates.
 
+## Deploying (free hosting)
+
+To get a live URL without spending anything on hosting:
+
+1. **Push this repo to your own GitHub** (already done if you're reading this from the repo).
+2. **Create a free Upstash Redis database** at https://console.upstash.com — needed because Vercel's
+   filesystem is wiped between requests, so the local-file budget tracker won't work there. Copy the
+   `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` from the database's REST API tab.
+3. **Import the repo into Vercel** at https://vercel.com/new — pick this GitHub repo, framework preset
+   auto-detects as Next.js, no build config changes needed.
+4. **Add environment variables** in the Vercel project's Settings → Environment Variables:
+   - `FAL_KEY`
+   - `ANTHROPIC_API_KEY`
+   - `ANTHROPIC_MODEL` (optional, defaults to `claude-haiku-4-5-20251001`)
+   - `MONTHLY_BUDGET_USD` (optional, defaults to `30`)
+   - `UPSTASH_REDIS_REST_URL`
+   - `UPSTASH_REDIS_REST_TOKEN`
+5. **Deploy.** Vercel's free tier covers hosting; your $30/month goes entirely to fal.ai + Claude usage.
+
+Every push to `main` auto-redeploys.
+
 ## Notes / next steps
 
 - Generations aren't persisted to disk beyond the spend ledger — the gallery

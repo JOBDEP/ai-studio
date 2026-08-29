@@ -1,27 +1,45 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { Redis } from "@upstash/redis";
 
-// Simple file-backed spend ledger. Good enough for a single-instance
-// personal deployment (a VPS, Docker box, or `next start` on one machine).
-// It will NOT work correctly on stateless serverless hosts like Vercel,
-// since each invocation may run on a different machine with its own disk —
-// swap this for Vercel KV / Upstash Redis / a real DB if you deploy there.
+// Spend tracking, with two backends:
+//
+// 1. Upstash Redis (used automatically when UPSTASH_REDIS_REST_URL and
+//    UPSTASH_REDIS_REST_TOKEN are set) — works on stateless serverless
+//    hosts like Vercel, since state lives in Redis, not on local disk.
+//    Free tier (10k requests/day) is far more than a personal app needs.
+//
+// 2. A local JSON file (data/usage.json) — used automatically when Redis
+//    env vars are absent. Fine for local dev or a single-instance VPS, but
+//    will NOT work correctly on Vercel (each invocation can run on a
+//    different machine with its own disk).
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const LEDGER_PATH = path.join(DATA_DIR, "usage.json");
 
-interface LedgerEntry {
-  timestamp: string;
-  kind: "image" | "video" | "prompt";
-  modelId: string;
-  costUsd: number;
+function monthKey(): string {
+  const now = new Date();
+  return `ai-studio:spend:${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
+function getRedis(): Redis | null {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  return new Redis({ url, token });
+}
+
+// --- File backend (fallback) ---
+
+interface LedgerEntry {
+  timestamp: string;
+  costUsd: number;
+}
 interface Ledger {
   entries: LedgerEntry[];
 }
 
-async function readLedger(): Promise<Ledger> {
+async function readFileLedger(): Promise<Ledger> {
   try {
     const raw = await fs.readFile(LEDGER_PATH, "utf-8");
     return JSON.parse(raw) as Ledger;
@@ -30,7 +48,7 @@ async function readLedger(): Promise<Ledger> {
   }
 }
 
-async function writeLedger(ledger: Ledger): Promise<void> {
+async function writeFileLedger(ledger: Ledger): Promise<void> {
   await fs.mkdir(DATA_DIR, { recursive: true });
   await fs.writeFile(LEDGER_PATH, JSON.stringify(ledger, null, 2));
 }
@@ -41,11 +59,26 @@ function isThisMonth(iso: string): boolean {
   return d.getUTCFullYear() === now.getUTCFullYear() && d.getUTCMonth() === now.getUTCMonth();
 }
 
+async function getMonthlySpendFile(): Promise<number> {
+  const ledger = await readFileLedger();
+  return ledger.entries.filter((e) => isThisMonth(e.timestamp)).reduce((sum, e) => sum + e.costUsd, 0);
+}
+
+async function recordSpendFile(costUsd: number): Promise<void> {
+  const ledger = await readFileLedger();
+  ledger.entries.push({ costUsd, timestamp: new Date().toISOString() });
+  await writeFileLedger(ledger);
+}
+
+// --- Public API (picks backend automatically) ---
+
 export async function getMonthlySpend(): Promise<number> {
-  const ledger = await readLedger();
-  return ledger.entries
-    .filter((e) => isThisMonth(e.timestamp))
-    .reduce((sum, e) => sum + e.costUsd, 0);
+  const redis = getRedis();
+  if (redis) {
+    const val = await redis.get<number | string>(monthKey());
+    return val ? Number(val) : 0;
+  }
+  return getMonthlySpendFile();
 }
 
 export function getMonthlyBudget(): number {
@@ -72,10 +105,13 @@ export async function assertWithinBudget(estCostUsd: number): Promise<void> {
   }
 }
 
-export async function recordSpend(entry: Omit<LedgerEntry, "timestamp">): Promise<void> {
-  const ledger = await readLedger();
-  ledger.entries.push({ ...entry, timestamp: new Date().toISOString() });
-  await writeLedger(ledger);
+export async function recordSpend(entry: { costUsd: number; kind?: string; modelId?: string }): Promise<void> {
+  const redis = getRedis();
+  if (redis) {
+    await redis.incrbyfloat(monthKey(), entry.costUsd);
+    return;
+  }
+  await recordSpendFile(entry.costUsd);
 }
 
 export async function getUsageSummary() {
