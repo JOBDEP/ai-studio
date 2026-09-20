@@ -22,16 +22,19 @@ isn't in the web UI yet.
 
 
 ```
-story ──► script (Claude) ──► voice (ElevenLabs, word timestamps)
+story ──► script (Claude or OpenAI) ──► voice (ElevenLabs, word timestamps)
                                   │
                                   ▼
        b-roll (Pexels) ──► captions (ASS) ──► assemble (ffmpeg) ──► QA ──► final.mp4
 ```
 
+The script writer and story picker use Anthropic if `ANTHROPIC_API_KEY` is
+set, otherwise `OPENAI_API_KEY` — set either one, not both.
+
 ## Run it
 
 ```bash
-cp .env.example .env            # fill ANTHROPIC_API_KEY, ELEVENLABS_*, PEXELS_API_KEY
+cp .env.example .env            # fill ANTHROPIC_API_KEY (or OPENAI_API_KEY), ELEVENLABS_*, PEXELS_API_KEY
 npm install
 
 npm run short -- make --mock --text "A man finds $41,000 in a thrift-store couch."

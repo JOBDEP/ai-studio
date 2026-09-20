@@ -9,6 +9,7 @@ interface FieldStatus {
 }
 interface ConfigStatus {
   anthropicApiKey: FieldStatus;
+  openaiApiKey: FieldStatus;
   elevenlabsApiKey: FieldStatus;
   elevenlabsVoiceId: FieldStatus;
   pexelsApiKey: FieldStatus;
@@ -26,7 +27,8 @@ interface JobStatus {
 }
 
 const FIELDS: { key: keyof ConfigStatus; label: string; help: string; type: string }[] = [
-  { key: "anthropicApiKey", label: "Anthropic API key", help: "console.anthropic.com/settings/keys — writes the script", type: "password" },
+  { key: "anthropicApiKey", label: "Anthropic API key", help: "console.anthropic.com/settings/keys — writes the script (or use OpenAI below instead)", type: "password" },
+  { key: "openaiApiKey", label: "OpenAI API key", help: "platform.openai.com/api-keys — alternative to Anthropic for writing the script", type: "password" },
   { key: "elevenlabsApiKey", label: "ElevenLabs API key", help: "elevenlabs.io/app/settings/api-keys — narrates it", type: "password" },
   { key: "elevenlabsVoiceId", label: "ElevenLabs voice ID", help: "elevenlabs.io/app/voice-lab — open your cloned voice, copy its ID", type: "text" },
   { key: "pexelsApiKey", label: "Pexels API key", help: "pexels.com/api — free stock footage", type: "password" },
@@ -34,7 +36,7 @@ const FIELDS: { key: keyof ConfigStatus; label: string; help: string; type: stri
 
 function emptyStatus(): ConfigStatus {
   const blank: FieldStatus = { set: false, source: "none", preview: "" };
-  return { anthropicApiKey: blank, elevenlabsApiKey: blank, elevenlabsVoiceId: blank, pexelsApiKey: blank };
+  return { anthropicApiKey: blank, openaiApiKey: blank, elevenlabsApiKey: blank, elevenlabsVoiceId: blank, pexelsApiKey: blank };
 }
 
 export default function ShortsStudio() {
@@ -125,7 +127,8 @@ export default function ShortsStudio() {
     }
   }
 
-  const missingLive = !mock && (!config.anthropicApiKey.set || !config.elevenlabsApiKey.set || !config.elevenlabsVoiceId.set || !config.pexelsApiKey.set);
+  const hasLlmKey = config.anthropicApiKey.set || config.openaiApiKey.set;
+  const missingLive = !mock && (!hasLlmKey || !config.elevenlabsApiKey.set || !config.elevenlabsVoiceId.set || !config.pexelsApiKey.set);
 
   return (
     <div className="min-h-screen bg-bg text-gray-100">
@@ -215,7 +218,8 @@ export default function ShortsStudio() {
 
           {missingLive && !mock && (
             <p className="text-xs text-yellow-500">
-              Add the four keys above for a real video, or turn on demo mode to try the pipeline right now.
+              Add the keys above for a real video (Anthropic or OpenAI, plus ElevenLabs and Pexels), or turn on demo
+              mode to try the pipeline right now.
             </p>
           )}
 

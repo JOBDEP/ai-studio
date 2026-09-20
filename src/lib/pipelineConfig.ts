@@ -16,6 +16,7 @@ const CONFIG_PATH = path.join(DATA_DIR, "pipeline-config.json");
 
 export interface StoredConfig {
   anthropicApiKey?: string;
+  openaiApiKey?: string;
   elevenlabsApiKey?: string;
   elevenlabsVoiceId?: string;
   pexelsApiKey?: string;
@@ -23,6 +24,7 @@ export interface StoredConfig {
 
 const FIELD_TO_ENV: Record<keyof StoredConfig, string> = {
   anthropicApiKey: "ANTHROPIC_API_KEY",
+  openaiApiKey: "OPENAI_API_KEY",
   elevenlabsApiKey: "ELEVENLABS_API_KEY",
   elevenlabsVoiceId: "ELEVENLABS_VOICE_ID",
   pexelsApiKey: "PEXELS_API_KEY",
@@ -74,6 +76,7 @@ export interface FieldStatus {
 
 export interface ConfigStatus {
   anthropicApiKey: FieldStatus;
+  openaiApiKey: FieldStatus;
   elevenlabsApiKey: FieldStatus;
   elevenlabsVoiceId: FieldStatus;
   pexelsApiKey: FieldStatus;

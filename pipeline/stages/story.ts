@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import Anthropic from "@anthropic-ai/sdk";
 import { cfg } from "../env";
+import { callTool, type ToolSpec } from "../llm";
 import type { Story } from "../types";
 
 function slug(s: string): string {
@@ -65,7 +65,7 @@ export function markUsed(id: string): void {
   fs.writeFileSync(USED_FILE(), JSON.stringify([...used], null, 2));
 }
 
-const PICK_TOOL: Anthropic.Tool = {
+const PICK_TOOL: ToolSpec = {
   name: "rate_stories",
   description: "Rate each candidate story for its potential as a 45-second animated short.",
   input_schema: {
@@ -93,22 +93,17 @@ export async function pickStory(candidates: Story[], mock: boolean): Promise<Sto
   if (fresh.length === 0) throw new Error("Every candidate story has already been used.");
   if (fresh.length === 1 || mock) return fresh[0];
 
-  const anthropic = new Anthropic({ apiKey: cfg.anthropicKey });
   const listing = fresh
     .map((c, i) => `#${i} ${c.title}\n${c.body.slice(0, 600).replace(/\s+/g, " ")}`)
     .join("\n\n");
-  const msg = await anthropic.messages.create({
-    model: cfg.pickerModel,
-    max_tokens: 1500,
-    tools: [PICK_TOOL],
-    tool_choice: { type: "tool", name: "rate_stories" },
+  const { ratings } = await callTool<{ ratings: { index: number; score: number }[] }>({
     system:
       "You pick stories for a YouTube Shorts channel that animates the internet's craziest money, scam, heist and windfall stories. Score high: a clear twist, concrete numbers, a villain or a lucky idiot, and a first line that raises a question. Score low: vague, sad without a twist, needs long context, or already famous.",
-    messages: [{ role: "user", content: `Rate these ${fresh.length} candidates.\n\n${listing}` }],
+    user: `Rate these ${fresh.length} candidates.\n\n${listing}`,
+    tool: PICK_TOOL,
+    model: { anthropic: cfg.pickerModel, openai: cfg.openaiPickerModel },
+    maxTokens: 1500,
   });
-  const tool = msg.content.find((b) => b.type === "tool_use");
-  if (!tool || tool.type !== "tool_use") throw new Error("Story picker returned no ratings.");
-  const ratings = (tool.input as { ratings: { index: number; score: number }[] }).ratings;
   const best = [...ratings].sort((a, b) => b.score - a.score)[0];
   return fresh[best?.index ?? 0] ?? fresh[0];
 }

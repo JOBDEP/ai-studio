@@ -1,11 +1,11 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { cfg } from "../env";
+import { callTool, type ToolSpec } from "../llm";
 import type { Script, Story, UploadMeta } from "../types";
 
 const EMOTIONS = ["neutral", "curious", "shocked", "amused", "serious", "excited", "smug"];
 const CAMERAS = ["close-up", "medium", "wide", "over-shoulder", "top-down"];
 
-const SCRIPT_TOOL: Anthropic.Tool = {
+const SCRIPT_TOOL: ToolSpec = {
   name: "write_script",
   description: "Write the shot-by-shot script for a 40-50 second vertical short.",
   input_schema: {
@@ -52,23 +52,13 @@ Rules:
 export async function writeScript(story: Story, mock: boolean): Promise<Script> {
   if (mock) return mockScript(story);
 
-  const anthropic = new Anthropic({ apiKey: cfg.anthropicKey });
-  const msg = await anthropic.messages.create({
-    model: cfg.scriptModel,
-    max_tokens: 2500,
-    tools: [SCRIPT_TOOL],
-    tool_choice: { type: "tool", name: "write_script" },
+  const raw = await callTool<Omit<Script, "shots"> & { shots: Omit<Script["shots"][number], "id">[] }>({
     system: SYSTEM,
-    messages: [
-      {
-        role: "user",
-        content: `Source story titled "${story.title}" (from ${story.source}):\n\n${story.body.slice(0, 6000)}`,
-      },
-    ],
+    user: `Source story titled "${story.title}" (from ${story.source}):\n\n${story.body.slice(0, 6000)}`,
+    tool: SCRIPT_TOOL,
+    model: { anthropic: cfg.scriptModel, openai: cfg.openaiScriptModel },
+    maxTokens: 2500,
   });
-  const tool = msg.content.find((b) => b.type === "tool_use");
-  if (!tool || tool.type !== "tool_use") throw new Error("Script writer returned no script.");
-  const raw = tool.input as Omit<Script, "shots"> & { shots: Omit<Script["shots"][number], "id">[] };
   const script: Script = {
     ...raw,
     hashtags: raw.hashtags.map((h) => h.replace(/^#/, "")),

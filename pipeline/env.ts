@@ -44,6 +44,18 @@ export const cfg = {
     return process.env.PIPELINE_PICKER_MODEL || process.env.ANTHROPIC_MODEL || "claude-haiku-4-5-20251001";
   },
 
+  // Alternative to Anthropic for the script-writing and story-picking
+  // stages — used only when ANTHROPIC_API_KEY isn't set (see pipeline/llm.ts).
+  get openaiKey() {
+    return process.env.OPENAI_API_KEY ?? "";
+  },
+  get openaiScriptModel() {
+    return process.env.OPENAI_SCRIPT_MODEL || "gpt-4o";
+  },
+  get openaiPickerModel() {
+    return process.env.OPENAI_PICKER_MODEL || "gpt-4o-mini";
+  },
+
   get elevenKey() {
     return process.env.ELEVENLABS_API_KEY ?? "";
   },
@@ -86,7 +98,7 @@ export const cfg = {
 export function requireKeys(mock: boolean): void {
   if (mock) return;
   const missing: string[] = [];
-  if (!cfg.anthropicKey) missing.push("ANTHROPIC_API_KEY");
+  if (!cfg.anthropicKey && !cfg.openaiKey) missing.push("ANTHROPIC_API_KEY or OPENAI_API_KEY");
   if (!cfg.elevenKey) missing.push("ELEVENLABS_API_KEY");
   if (!cfg.elevenVoiceId) missing.push("ELEVENLABS_VOICE_ID");
   if (!cfg.pexelsKey) missing.push("PEXELS_API_KEY");
