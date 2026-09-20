@@ -97,7 +97,12 @@ export default function Studio() {
           <h1 className="text-lg font-semibold tracking-tight">AI Studio</h1>
           <p className="text-xs text-gray-500">fal.ai generation + Claude prompt enhancement</p>
         </div>
-        <BudgetMeter refreshKey={refreshKey} />
+        <div className="flex items-center gap-4">
+          <a href="/shorts" className="text-xs text-gray-400 hover:text-gray-200 underline underline-offset-2">
+            Shorts generator →
+          </a>
+          <BudgetMeter refreshKey={refreshKey} />
+        </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-8">

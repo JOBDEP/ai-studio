@@ -4,6 +4,23 @@ Story in, upload-ready vertical short out. Every stage writes its output to
 `jobs/<job>/` and is skipped on re-run if that output already exists, so a
 failed run resumes where it stopped.
 
+## Web UI (easiest way to run this)
+
+Double-click **`start.bat`** (Windows) or run `./start.sh` (macOS/Linux) in
+the repo folder. It installs dependencies the first time, starts the app,
+and opens **http://localhost:3000/shorts** in your browser.
+
+On that page: open **Settings** and paste your API keys (saved to
+`data/pipeline-config.json`, never committed to git — no `.env` editing
+needed), type a story in the box, and click **Generate short**. A log shows
+each stage as it runs; when it's done the video plays right there with a
+download link. Check **Demo mode** to try the whole thing with no keys at
+all (canned script, silent voice, colour placeholders).
+
+The command line below does the same thing and adds YouTube upload, which
+isn't in the web UI yet.
+
+
 ```
 story ──► script (Claude) ──► voice (ElevenLabs, word timestamps)
                                   │

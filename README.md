@@ -90,11 +90,17 @@ Every push to `main` auto-redeploys.
 - Video models are notably more expensive than image models; the UI defaults
   to the cheaper LTX Video option to keep a $30/month budget realistic.
 
-## Shorts pipeline
+## Shorts generator
 
-`npm run short -- make --text "…"` turns a story into an upload-ready
-vertical short: Claude writes a shot-by-shot script, ElevenLabs narrates it
-in your cloned voice, Pexels supplies free footage, ffmpeg cuts it to the
-voice with word-pop captions, and a QA gate checks the result. See
-[`pipeline/README.md`](pipeline/README.md). `--mock` runs the whole thing
-with no API keys.
+Turns a story into an upload-ready vertical short: Claude writes a
+shot-by-shot script, ElevenLabs narrates it in your cloned voice, Pexels
+supplies free footage, ffmpeg cuts it to the voice with word-pop captions,
+and a QA gate checks the result.
+
+**Easiest way to run it:** double-click `start.bat` (Windows) or run
+`./start.sh` (macOS/Linux), then open the **Settings** panel on the page
+that opens and paste your API keys — no `.env` editing needed. See
+[`pipeline/README.md`](pipeline/README.md) for the command-line version
+(`npm run short -- make --text "…"`) and the YouTube upload step, which
+isn't in the web UI yet. `--mock` / the page's **Demo mode** run the whole
+thing with no API keys.
