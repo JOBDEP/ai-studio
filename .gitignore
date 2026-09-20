@@ -10,3 +10,6 @@ npm-debug.log*
 .DS_Store
 *.tsbuildinfo
 next-env.d.ts
+
+# Shorts pipeline output folders (jobs/<name>/final.mp4 etc.)
+jobs/
