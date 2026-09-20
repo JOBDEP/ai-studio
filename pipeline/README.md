@@ -55,8 +55,31 @@ Voice synthesis goes through the same monthly budget guard as image and
 video generation (`src/lib/budget.ts`, `MONTHLY_BUDGET_USD`). The estimate
 is `ELEVENLABS_USD_PER_1K_CHARS` × characters spoken.
 
+## Upload
+
+```bash
+npm run youtube-auth                          # one time: opens a browser,
+                                                # prints YOUTUBE_REFRESH_TOKEN
+                                                # to add to .env
+npm run short -- upload --job <job> --dry-run  # sanity check, no network,
+                                                # no OAuth needed
+npm run short -- upload --job <job>            # uploads as private
+npm run short -- upload --job <job> --public   # uploads and publishes now
+```
+
+`youtube-auth` needs `YOUTUBE_CLIENT_ID` / `YOUTUBE_CLIENT_SECRET` from a
+**Desktop app** OAuth client (Google Cloud Console → APIs & Services →
+Credentials) with the YouTube Data API v3 enabled on that project. It only
+works on a machine with a real browser and a reachable `localhost` — not
+inside a headless sandbox. The refresh token it prints does not expire on
+its own; you only need to run it again if you revoke access.
+
+Uploads default to **private** so you can preview before it goes live;
+`--public` publishes immediately. A custom thumbnail (`cover.jpg`) is only
+set if the channel is phone-verified — the upload still succeeds if it
+isn't, just without a custom thumbnail. `uploaded.json` records the
+resulting video ID and URL.
+
 ## Not in phase 1
 
-Upload (`upload.json` is ready for it, YouTube needs OAuth rather than an
-API key), scheduling, TikTok/Instagram, the feedback loop, and the 3D
-render tier.
+Scheduling, TikTok/Instagram, the feedback loop, and the 3D render tier.

@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "short": "tsx pipeline/cli.ts"
+    "short": "tsx pipeline/cli.ts",
+    "youtube-auth": "tsx pipeline/get-youtube-token.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",

@@ -41,6 +41,10 @@ export const cfg = {
 
   pexelsKey: process.env.PEXELS_API_KEY ?? "",
 
+  youtubeClientId: process.env.YOUTUBE_CLIENT_ID ?? "",
+  youtubeClientSecret: process.env.YOUTUBE_CLIENT_SECRET ?? "",
+  youtubeRefreshToken: process.env.YOUTUBE_REFRESH_TOKEN ?? "",
+
   jobsDir: process.env.PIPELINE_JOBS_DIR || path.join(process.cwd(), "jobs"),
   captionFont: process.env.CAPTION_FONT || "DejaVu Sans",
   captionFontsDir: process.env.CAPTION_FONTS_DIR || "",
