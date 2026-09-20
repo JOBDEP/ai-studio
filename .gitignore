@@ -6,7 +6,11 @@ build/
 .env.local
 .env*.local
 data/usage.json
+data/pipeline-config.json
 npm-debug.log*
 .DS_Store
 *.tsbuildinfo
 next-env.d.ts
+
+# Shorts pipeline output folders (jobs/<name>/final.mp4 etc.)
+jobs/
